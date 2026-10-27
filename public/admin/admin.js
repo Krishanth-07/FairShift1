@@ -18,10 +18,10 @@ let siteCodeTimer = null;
  * Initializes Admin application on page load.
  */
 async function init() {
+  setupEventListeners();
   await initI18n();
   translateDOM();
   setupLanguageSwitcher();
-  setupEventListeners();
 
   try {
     const me = await apiRequest('/api/auth/me');
@@ -74,6 +74,20 @@ function setupEventListeners() {
       handleLogin(e);
     });
   }
+
+  // Handle enter key on input fields
+  const idInput = document.getElementById('input-admin-id');
+  const pinInput = document.getElementById('input-admin-pin');
+  [idInput, pinInput].forEach((input) => {
+    if (input) {
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleLogin(e);
+        }
+      });
+    }
+  });
 
   // Logout button
   const logoutBtn = document.getElementById('btn-admin-logout');

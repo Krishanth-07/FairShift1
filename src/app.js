@@ -92,6 +92,11 @@ export function createApp({ config, repo, clock }) {
     })
   );
 
+  // Safety redirect for native form post fallback
+  app.post(['/admin', '/admin/'], (req, res) => {
+    res.redirect(303, '/admin/');
+  });
+
   // Fallback 404 handler for unknown routes
   app.use(notFoundHandler);
 
