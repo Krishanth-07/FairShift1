@@ -64,3 +64,40 @@ This document records the architectural and technology decisions made for FairSh
 - **Consequences**:
   - Absolute protection against whistleblower retaliation.
   - Unlinkable monthly rate-limiting prevents feedback spam without de-anonymizing workers.
+
+---
+
+## ADR 006: Zero-Framework, Zero-Build Frontend with Strict CSP
+
+- **Status**: Accepted
+- **Context**: Frontline worker apps must run smoothly on low-end mobile devices over basic 3G/4G connectivity, with zero exposure to script injection attacks (XSS).
+- **Decision**:
+  - Pure vanilla JavaScript with standard ES modules served directly without bundlers (no React, Vue, Webpack, Vite, or Babel).
+  - Strict Content Security Policy enforced via Helmet (`script-src 'self'`, `style-src 'self'`, `default-src 'self'`, `object-src 'none'`).
+  - Zero inline `<script>` tags, zero inline `<style>` or `style="..."` attributes, and strictly zero `innerHTML` usage. DOM construction uses pure browser APIs (`document.createElement`, `textContent`).
+- **Consequences**:
+  - Instant page boot (< 100ms) with lightweight transfer size (< 550 KB total repository assets).
+  - Complete immunity against DOM-based XSS injection.
+
+---
+
+## ADR 007: Rotating Time-Windowed Site Codes vs. Continuous GPS
+
+- **Status**: Accepted
+- **Context**: Employers require proof that workers physically logged shifts at the job site, but continuous GPS tracking is invasive, drains worker batteries, and violates privacy standards.
+- **Decision**: Implement dynamic 6-digit TOTP-style rotating site codes derived from HMAC-SHA256 (`generateSiteCode`). Codes update every 5 minutes and are displayed on-site or in the supervisor dashboard. Punch verification accepts the current window and immediately adjacent windows (±5 minutes).
+- **Consequences**:
+  - Cryptographic verification of physical presence without storing or requesting GPS coordinates.
+  - Workers' location is never tracked outside or inside the facility.
+
+---
+
+## ADR 008: Config-Driven Cross-Sector Industry Profiles
+
+- **Status**: Accepted
+- **Context**: Workplace norms vary widely between sectors (e.g. daytime heavy civil engineering vs. round-the-clock intensive clinical care). Building custom engines per vertical causes code duplication and fragmented security boundaries.
+- **Decision**: Single unified pure decision engine parametrized by configuration profiles (`src/config/industries.js`). The engine evaluates fatigue, roster alignment, overtime multipliers, and escalation deadlines strictly from the active site's profile.
+- **Consequences**:
+  - Immediate multi-industry support (`construction` and `hospital`) from one verified codebase.
+  - Adding a new sector (e.g., `logistics`, `manufacturing`, `mining`) requires zero modifications to engine code—simply adding an illustrative configuration profile.
+

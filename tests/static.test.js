@@ -20,14 +20,67 @@ describe('Static Asset & CSP Compliance', () => {
     return results;
   }
 
-  it('public/worker/index.html must have lang, title, and main semantic element', () => {
-    const workerHtmlPath = path.join(publicDir, 'worker/index.html');
-    assert.ok(fs.existsSync(workerHtmlPath), 'worker/index.html must exist');
-    const content = fs.readFileSync(workerHtmlPath, 'utf8');
+  it('all HTML files must have lang, title, and main semantic element', () => {
+    const htmlFiles = getFiles(publicDir, name => name.endsWith('.html'));
+    for (const file of htmlFiles) {
+      const content = fs.readFileSync(file, 'utf8');
+      assert.match(content, /<html\s+[^>]*lang=["'][a-zA-Z\-]+["']/i, `${file} must specify lang attribute`);
+      assert.match(content, /<title>[^<]+<\/title>/i, `${file} must have a non-empty <title>`);
+      assert.match(content, /<main(\s+[^>]*)?>[\s\S]*<\/main>/i, `${file} must contain a <main> element`);
+    }
+  });
 
-    assert.match(content, /<html\s+[^>]*lang=["'][a-zA-Z\-]+["']/i, 'index.html must specify lang attribute');
-    assert.match(content, /<title>[^<]+<\/title>/i, 'index.html must have a non-empty <title>');
-    assert.match(content, /<main(\s+[^>]*)?>[\s\S]*<\/main>/i, 'index.html must contain a <main> element');
+  it('all form controls and interactive buttons must have accessible labels', () => {
+    const htmlFiles = getFiles(publicDir, name => name.endsWith('.html'));
+
+    for (const file of htmlFiles) {
+      const content = fs.readFileSync(file, 'utf8');
+
+      // Check inputs, textareas, selects
+      const controlRegex = /<(input|textarea|select)\b([^>]*)>/gi;
+      let match;
+      while ((match = controlRegex.exec(content)) !== null) {
+        const [tag, type, attrs] = match;
+        if (/type=["']hidden["']/i.test(attrs)) continue;
+
+        const idMatch = attrs.match(/\bid=["']([^"']+)["']/i);
+        const ariaLabelMatch = attrs.match(/\baria-label=["']([^"']+)["']/i);
+        const ariaLabelledByMatch = attrs.match(/\baria-labelledby=["']([^"']+)["']/i);
+
+        let hasLabel = Boolean(ariaLabelMatch || ariaLabelledByMatch);
+        if (idMatch) {
+          const id = idMatch[1];
+          const labelForRegex = new RegExp(`<label\\b[^>]*\\bfor=["']${id}["']`, 'i');
+          if (labelForRegex.test(content)) {
+            hasLabel = true;
+          }
+        }
+
+        // Check if control is wrapped in a <label>
+        const controlIndex = match.index;
+        const precedingContent = content.slice(Math.max(0, controlIndex - 200), controlIndex);
+        if (/<label\b[^>]*>[^<]*$/i.test(precedingContent)) {
+          hasLabel = true;
+        }
+
+        assert.ok(hasLabel, `Form control ${tag} in ${file} must have an accessible label`);
+      }
+
+      // Check buttons
+      const buttonRegex = /<button\b([^>]*)>([\s\S]*?)<\/button>/gi;
+      let btnMatch;
+      while ((btnMatch = buttonRegex.exec(content)) !== null) {
+        const [fullBtn, attrs, innerText] = btnMatch;
+        const textContent = innerText.replace(/<[^>]+>/g, '').trim();
+        const hasAriaLabel = /\baria-label=["']([^"']+)["']/i.test(attrs);
+        const hasAriaLabelledBy = /\baria-labelledby=["']([^"']+)["']/i.test(attrs);
+
+        assert.ok(
+          textContent.length > 0 || hasAriaLabel || hasAriaLabelledBy,
+          `Button in ${file} must have visible text or an aria-label: ${fullBtn}`
+        );
+      }
+    }
   });
 
   it('HTML files must not contain inline <script> blocks (only external src)', () => {

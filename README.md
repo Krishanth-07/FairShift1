@@ -1,141 +1,182 @@
 # FairShift 🛡️
 
 > **A worker-first workplace trust platform for UN SDG 8 (Decent Work and Economic Growth).**
+>
+> *"Workers and employers shouldn't have to trust each other. They should be able to check."*
 
-FairShift bridges the transparency, safety, and trust gap between frontline workers and employers in shift-intensive industries. Built with a verified, two-sided work record and an explainable decision engine, FairShift guarantees that workers can prove hours worked, report safety hazards with zero retaliation risk, and access portable credentials.
+FairShift bridges the transparency, safety, and accountability gap between frontline shift workers and employers. Built with a verified two-sided work record, an explainable decision engine, and a privacy-preserving whistleblowing architecture, FairShift enables workers to prove hours worked, resolve payroll discrepancies, and report workplace hazards with zero fear of retaliation.
 
 ---
 
-## 🌟 Key Capabilities
+## 🎯 Problem Statement & Feature Mapping
 
-1. **Tamper-Evident Shift Receipts**: Individual append-only SHA-256 hash chains per worker with HMAC-SHA256 digital receipts.
-2. **Rotating Physical Site Codes**: Time-windowed TOTP-style codes linking punches to job sites without requiring active client internet.
-3. **Pure Function Decision Engine**: Deterministic calculations for hours, overtime, and fatigue rules returning structured explainable reason codes.
-4. **Offline Batch Synchronization**: Up to 50 punches sorted chronologically with per-item idempotency.
-5. **Privacy-Preserving Hazard Reporting**: Anonymous hazard reporting with unambiguous alphanumeric tracking codes (`FS-XXXX-XXXX`) and zero stored worker metadata.
-6. **k-Anonymous Sentiment Pulse**: Feedback aggregation requiring a minimum group size of 5 before disclosing sentiment, protected by unlinkable monthly rate markers.
-7. **Cross-Sector Support from Single Core**: Configurable profiles for **Construction** (heat safety thresholds, daily caps) and **Hospital** (round-the-clock rotations, night shift fatigue limits).
+Frontline industries (construction, healthcare, manufacturing, sanitation) employ millions of shift workers under asymmetric conditions where records are unilaterally controlled by employers.
+
+| Frontline Problem | Industry Reality | FairShift Architectural Solution |
+|---|---|---|
+| **Wage Theft & Unrecorded Overtime** | Paper logs or employer databases can be retroactively altered, shorting overtime pay. | **Tamper-Evident Hash Chains & HMAC Receipts**: Every shift punch is linked into an individual SHA-256 chain. Workers receive a cryptographically signed receipt immediately verifiable on their device. |
+| **Invasive Worker Surveillance** | Apps enforce continuous background GPS or biometric scans, violating worker privacy. | **Dynamic Rotating Site Codes**: TOTP-style 6-digit codes rotate every 5 minutes at the facility, proving physical presence without GPS or biometrics. |
+| **Fatigue & Unsafe Rotations** | Chronic overtime and back-to-back shifts cause severe occupational burnout and injury. | **Pure Explainable Fatigue Engine**: Automatically flags excessive daily hours, 7-day rolling ceilings, and short rest intervals with structured explainable reason codes. |
+| **Fear of Retaliation on Hazards** | Workers stay silent about collapsed scaffolding or biohazards for fear of termination. | **Anonymous Hazard Reporting & SLA Escalation**: Hazard reports store zero worker identity fields. Private `FS-XXXX-XXXX` tracking codes let workers monitor progress; overdue hazards automatically escalate. |
+| **Management Blacklists for Feedback** | Supervisors retaliate against workers who report poor site conditions or abusive practices. | **k-Anonymous Sentiment Pulse (Group Size $\ge 5$)**: Employer dashboards hide feedback aggregates until at least 5 workers submit sentiment, guarded by unlinkable monthly HMAC markers. |
+| **Low Literacy & Linguistic Barriers** | Complex legalistic portals exclude workers who do not speak English or read text well. | **Multilingual Voice-First PWA**: Spoken-style English, Tamil (`ta-IN`), and Hindi (`hi-IN`) interfaces with Web Speech read-aloud and voice-to-text input. |
 
 ---
 
 ## 🏛️ System Architecture
 
 ```text
-┌────────────────────────────────────────────────────────┐
-│               Frontline Dual Interfaces                │
-│       Worker Web App        │      Employer Dashboard  │
-└───────────────┬────────────────────────────┬───────────┘
-                │ HTTP / REST                │
-┌───────────────▼────────────────────────────▼───────────┐
-│               Security & Transport Layer               │
-│ Helmet CSP • 20kb Limit • Rate Limiters • CSRF Header │
-└───────────────────────────────┬────────────────────────┘
-                                │
-┌───────────────────────────────▼────────────────────────┐
-│                   Express API Routing                  │
-│   /api/auth   │   /api/records   │   /api/admin/overview│
-└───────────────┬────────────────────────────┬───────────┘
-                │                            │
-┌───────────────▼──────────────┐ ┌───────────▼───────────┐
-│        Service Layer         │ │ Pure Decision Engine  │
-│ recordService  payslipService│ │ hours.js      pay.js  │
-│ reportService  adviceService │ │ fatigue.js  chain.js  │
-│ feedbackService adminService │ │ anomaly.js risk.js    │
-└───────────────┬──────────────┘ └───────────┬───────────┘
-                │                            │
-┌───────────────▼────────────────────────────▼───────────┐
-│                  In-Memory Repository                  │
-│   (Swap with Firestore / PostgreSQL in Production)     │
-└────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                      Frontline Dual Interfaces                         │
+│   Worker PWA (/worker/)   │   Employer Dashboard (/admin/)  │  /trust/ │
+└───────────────────┬────────────────────────────┬───────────────────────┘
+                    │ HTTP / REST                │
+┌───────────────────▼────────────────────────────▼───────────────────────┐
+│                       Security & Transport Layer                       │
+│  Helmet Strict CSP • 20kb JSON Limit • Rate Limiters • CSRF Validation │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+┌───────────────────────────────────▼────────────────────────────────────┐
+│                          Express API Routing                           │
+│  /api/auth   │   /api/records   │   /api/me/*   │  /api/admin/*        │
+└───────────────────┬────────────────────────────┬───────────────────────┘
+                    │                            │
+┌───────────────────▼──────────────┐ ┌───────────▼───────────────────────┐
+│          Service Layer           │ │        Pure Decision Engine       │
+│  recordService    payslipService │ │  hours.js          pay.js         │
+│  reportService    adviceService  │ │  fatigue.js        chain.js       │
+│  feedbackService  adminService   │ │  anomaly.js        risk.js        │
+│                                  │ │  triage.js         escalation.js  │
+│                                  │ │  anonymity.js      advocate.js    │
+└───────────────────┬──────────────┘ └───────────┬───────────────────────┘
+                    │                            │
+┌───────────────────▼────────────────────────────▼───────────────────────┐
+│                          In-Memory Repository                          │
+│          (Swap memoryRepository.js for Firestore in Production)        │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🔌 API Route Reference
+## 🏭 Two Industries & Adding a Third via Config
 
-All endpoints return JSON and enforce strict schema validation, rejecting unexpected parameters with HTTP 400.
+FairShift runs multiple diverse industries from a single unified core engine via configuration profiles in [`src/config/industries.js`](file:///c:/Users/krish/OneDrive/Desktop/FairShift/src/config/industries.js).
 
-### Public Transparency
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/healthz` | System health check and server timestamp. |
-| `GET` | `/api/public/what-we-store` | Machine-readable transparency specification detailing stored vs forbidden fields. |
+### Active Built-in Profiles
+1. **Construction (`"construction"`)**:
+   - Heavy daytime shifts (07:00–15:30, 15:30–23:30).
+   - Strict 10-hour daily maximum and 12-hour minimum rest gap between shifts.
+   - 1.5x overtime wage multiplier.
+   - Environmental heat safety rules (caution, extreme caution, danger, mandatory work stoppage).
+   - Fast 2-hour critical hazard escalation deadline for structural risks.
+2. **Hospital (`"hospital"`)**:
+   - Round-the-clock rotations including overnight shifts (23:00–07:30).
+   - Emergency allowance up to 14 hours with mandatory 3-consecutive-night shift limit.
+   - 2.0x overtime multiplier for emergency medical coverage.
+   - Biohazard spill and medical supply shortage triage categories.
 
-### Authentication
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| `POST` | `/api/auth/login` | None | Authenticates worker/admin with userId and 4-8 digit PIN. Sets httpOnly `fs_session` cookie. |
-| `POST` | `/api/auth/logout` | Session | Clears session cookie. Requires `X-Requested-With: fairshift`. |
-| `GET` | `/api/auth/me` | Session | Returns authenticated profile (omits PIN hash/salt). |
-| `POST` | `/api/auth/demo-login` | Demo | Instant login for demo users. Available only when `DEMO_MODE=true`. |
+### How to Add a Third Industry (e.g., Logistics / Warehousing)
+To support a new sector, add an entry to the `INDUSTRIES` dictionary in `src/config/industries.js`. Zero engine changes required:
 
-### Worker Self-Service (`role: worker`)
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/records` | Records a shift check-in or check-out with rotating site code. |
-| `POST` | `/api/records/sync` | Synchronizes up to 50 offline punches chronologically. |
-| `GET` | `/api/me/status` | Current active session, punch count, and recent records. |
-| `GET` | `/api/me/payslip?period=YYYY-MM` | Itemized monthly payslip with logged vs payroll reconciliation and audit trails. |
-| `GET` | `/api/me/advice` | Synthesized advocate advisory prioritizing rest, pay, and hazards. |
-| `POST` | `/api/reports` | Submits an anonymous hazard report. Stores zero worker identity. |
-| `GET` | `/api/reports/:code` | Queries hazard report status by tracking code (`FS-XXXX-XXXX`). |
-| `POST` | `/api/feedback` | Submits anonymous workplace sentiment (manager, policy, conditions). |
-| `POST` | `/api/me/days/:date/dispute` | Formally flags a logged shift day as disputed. |
+```javascript
+// src/config/industries.js
+export const INDUSTRIES = {
+  // Existing: construction, hospital...
 
-### Employer & Site Admin (`role: admin`, scoped to `req.user.siteId`)
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/admin/overview` | 360-degree site dashboard: attendance, fatigue alerts, anomalies, reports, feedback. |
-| `GET` | `/api/admin/site-code` | Retrieves active 5-minute rotating site code for worker check-ins. |
-| `GET` | `/api/admin/reports` | Lists site hazard reports sorted by escalation status, severity, and age. |
-| `PATCH` | `/api/admin/reports/:id` | Enforces linear status transition: `open -> acknowledged -> in_progress -> resolved`. |
-| `PUT` | `/api/admin/payroll` | Modifies worker payroll hours and logs an auditable entry. |
-| `POST` | `/api/admin/days/confirm` | Confirms a worker's logged shift day. |
-| `POST` | `/api/admin/days/dispute` | Flags a worker's shift day as disputed. |
-| `GET` | `/api/admin/integrity` | Cryptographically verifies hash chain continuity for all site workers. |
+  logistics: {
+    id: 'logistics',
+    label: 'Logistics & Fulfillment Hub',
+    currency: 'INR',
+    shifts: [
+      { id: 'log-day', name: 'Sortation Day', start: '06:00', end: '14:30', isNight: false },
+      { id: 'log-night', name: 'Dispatch Night', start: '22:00', end: '06:30', isNight: true }
+    ],
+    normalDailyHours: 8,
+    overtimeMultiplier: 1.75,
+    maxDailyHours: 11,
+    maxWeeklyHours: 50,
+    minRestHours: 11,
+    maxConsecutiveNights: 4,
+    heat: null, // Indoor climate-controlled facility
+    reportCategories: [
+      'conveyor_jam',
+      'forklift_safety',
+      'pallet_collapse',
+      'blocked_fire_exit',
+      'speeding_vehicle'
+    ],
+    severityDeadlineHours: { critical: 2, high: 8, medium: 24, low: 72 },
+    lateSyncWarnHours: 12,
+    reconcileToleranceMinutes: 15
+  }
+};
+```
 
 ---
 
-## 🔒 Security & Privacy Highlights
+## 🚀 Running & Testing
 
-- **Secret Zero**: All secrets passed via environment variables with random cryptographic fallbacks during development.
-- **Strict Content Security Policy (CSP)**: `default-src 'self'`, no inline scripts, no inline styles, no clickjacking (`frame-ancestors 'none'`).
-- **CSRF Defense**: State-mutating methods (`POST`, `PUT`, `PATCH`, `DELETE`) strictly require `X-Requested-With: fairshift` header alongside `SameSite=Strict` cookies.
-- **Constant-Time Verification**: `crypto.timingSafeEqual` used on PIN verification, HMAC receipts, session tokens, and site code comparisons to prevent timing side channels.
-- **Rate Limiting**: Tiered IP-based limits (300/15m general, 10/15m login, 20/h reports, 10/h feedback).
-- **Anti-Enumeration Login**: Identical error responses and simulated work duration for non-existent users and wrong PINs.
-- **k-Anonymity (Group Size >= 5)**: Feedback aggregate analytics are suppressed until 5 or more distinct workers submit feedback at that site.
-- **Payload Restrictions**: Strict 20kb JSON payload ceiling prevents buffer starvation and memory exhaustion.
+### Prerequisites
+- Node.js >= 20 (`node -v` must report v20+)
+- Plain JavaScript only — no TypeScript, no build step, no bundlers.
+
+### Local Setup
+```bash
+# Clone the repository
+git clone <repo-url>
+cd FairShift
+
+# Copy environment variables
+cp .env.example .env
+
+# Install approved runtime dependencies (express, helmet, express-rate-limit, compression)
+npm install
+
+# Run automated test suite (174 tests, 60 suites)
+npm test
+
+# Launch development server
+npm start
+```
+
+### Docker Deployment
+```bash
+# Build lightweight Alpine image
+docker build -t fairshift:latest .
+
+# Run container as non-root user (port 8080)
+docker run -p 8080:8080 -e DEMO_MODE=true fairshift:latest
+```
 
 ---
 
 ## 🎭 How to Demo (Interactive 4-Step Walkthrough)
 
-Start FairShift in demo mode (`DEMO_MODE=true npm start` or `node src/server.js` with `DEMO_MODE=true` in `.env`). In demo mode, one-click login cards appear on both the Worker App (`/worker/`) and Admin Dashboard (`/admin/`).
+Start FairShift in demo mode (`DEMO_MODE=true npm start`). One-click demo cards appear on both the Worker App and Admin Dashboard.
 
-### Demo Credentials & Personas
+### Demo Personas
 - **Construction Worker**: `c_worker_1` (Rajesh Kumar) — Greenfield Tower Construction
 - **Hospital Worker**: `h_worker_2` (Deepa Nair) — City General Hospital
 - **Construction Admin**: `c_admin_1` (Priya Desai) — Greenfield Tower Construction
 - **Hospital Admin**: `h_admin_1` (Vikram Reddy) — City General Hospital
-- **Universal Demo PIN**: `4321` (or whatever `SEED_PIN` is configured)
+- **Universal Demo PIN**: `4321` (or configured `SEED_PIN`)
 
 ---
 
-### The 4-Step Verification Flow
+### The 4-Step Verification Walkthrough
 
 #### Step 1: Explainable Worker Advocate & Underpaid Payslip
 1. Open the **Worker App** at `http://localhost:8080/worker/`.
 2. Click the quick-login card for **Rajesh Kumar** (`c_worker_1`).
-3. Notice the **Worker Trust Advocate** card on the Home screen: it immediately surfaces an active **Pay Advisory: Unpaid Hours Detected** with structured reasons. Click the speaker icon to hear the advice read aloud in English/Hindi.
-4. Navigate to the **Payslip** tab: a prominent alert highlights that logged shift hours exceed employer payroll records. Click **Dispute This Discrepancy** to submit a formal shift dispute.
+3. The **Worker Trust Advocate** immediately displays: **Pay Advisory: Unpaid Hours Detected**. Click the speaker icon to listen via speech synthesis.
+4. Navigate to the **Payslip** tab: a red underpayment card details that logged shift hours exceed employer payroll records. Click **Dispute This Discrepancy** to submit a formal shift dispute.
 
 #### Step 2: Frontline Check-In with Rotating Site Code & Offline Queue
 1. Open the **Admin Dashboard** in a second window at `http://localhost:8080/admin/`.
-2. Click **Priya Desai** (`c_admin_1`). View the **Active Rotating Site Code** card displaying a 6-digit TOTP code and live countdown.
-3. In the Worker window, click the giant **Check In to Shift** button and enter the 6-digit code.
+2. Click **Priya Desai** (`c_admin_1`). View the **Active Rotating Site Code** displaying a 6-digit TOTP code and live countdown timer.
+3. In the Worker window, click **Check In to Shift** and enter the 6-digit code.
 4. An instant verifiable digital receipt is issued with a SHA-256 record hash and HMAC signature.
-5. *Offline Resilience*: Turn off Wi-Fi or set browser DevTools to Offline. Click punch again — shifts queue safely in local storage and synchronize automatically with per-item idempotency when connection restores.
+5. *Offline Resilience*: Turn off your connection or set DevTools to Offline. Click punch again — shifts queue safely in local storage and synchronize automatically with per-item idempotency when reconnected.
 
 #### Step 3: Anonymous Voice Hazard Reporting & Escalation SLA
 1. In the Worker App, switch to the **Safety** tab.
@@ -151,10 +192,20 @@ Start FairShift in demo mode (`DEMO_MODE=true npm start` or `node src/server.js`
 
 ---
 
+## 🔒 Security & Privacy Highlights
+
+- **Secret Zero**: All secrets passed via environment variables with random cryptographic fallbacks during development.
+- **Strict Content Security Policy (CSP)**: `default-src 'self'`, `script-src 'self'`, `style-src 'self'`, no inline scripts, no inline styles, no clickjacking (`frame-ancestors 'none'`).
+- **CSRF Defense**: State-mutating methods (`POST`, `PUT`, `PATCH`, `DELETE`) require `X-Requested-With: fairshift` alongside `SameSite=Strict` cookies.
+- **Constant-Time Verification**: `crypto.timingSafeEqual` used on PIN verification, HMAC receipts, session tokens, and site code comparisons.
+- **Anti-Enumeration Login**: Identical error responses and simulated work duration for non-existent users and incorrect PINs.
+- **Rate Limiting**: Tiered IP limits (300/15m general, 10/15m login, 20/h reports, 10/h feedback).
+- **Payload Restrictions**: Strict 20kb JSON payload ceiling prevents buffer starvation and memory exhaustion.
+
+---
+
 ## ♿ Accessibility & Inclusivity (WCAG 2.1 AA)
 
-FairShift is engineered for frontline workers on basic smartphones, noisy work sites, and diverse literacy backgrounds:
-- **Zero Framework / Zero Bundler**: Plain vanilla ES modules for instant loading on 3G/4G connections.
 - **Strict Color Contrast**: All text/background combinations meet or exceed **WCAG 2.1 AA 4.5:1** (tested and verified via `tests/contrast.test.js`).
 - **Touch Ergonomics**: All interactive buttons, inputs, and tab navigation bars provide minimum tap target dimensions of **44px by 44px**.
 - **Keyboard Operable**: Visible 3px high-contrast focus rings on interactive elements with full tab-key navigability.
@@ -163,8 +214,9 @@ FairShift is engineered for frontline workers on basic smartphones, noisy work s
 
 ---
 
-## ⚖️ Honest Limitations & Design Trade-offs
+## ⚖️ Honest Limitations & Assumptions
 
+### Honest Limitations
 1. **Tamper-Evident, Not Tamper-Proof**:
    FairShift's append-only hash chains make **any post-hoc data tampering immediately detectable** via `/api/admin/integrity` and digital receipts. However, without external multi-party replication, an attacker with full root database access could delete or rewrite the store. In production, chain heads should be anchored to an external ledger or cloud write-once archive (e.g. Google Cloud Storage bucket lock).
 2. **Rotating Site Codes Mitigate, but Do Not Prevent, Code Sharing**:
@@ -176,37 +228,7 @@ FairShift is engineered for frontline workers on basic smartphones, noisy work s
 5. **Rule-Based Triage with AI Roadmap**:
    Current hazard report triage utilizes deterministic multilingual keyword matching across English, Tamil, and Hindi. While resilient against prompt injection and zero-latency, nuanced spoken transcripts will benefit from Google Gemini SDK integration in production.
 
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js >= 20
-
-### Setup
-```bash
-# Clone the repository
-git clone <repo-url>
-cd FairShift
-
-# Copy environment variables
-cp .env.example .env
-
-# Install approved runtime dependencies
-npm install
-
-# Run automated test suite (163 tests)
-npm test
-
-# Launch development server
-npm start
-```
-
-### Docker Deployment
-```bash
-# Build container image
-docker build -t fairshift:latest .
-
-# Run containerized service
-docker run -p 8080:8080 -e DEMO_MODE=true fairshift:latest
-```
+### Assumptions
+1. **Clock Monotonicity**: Worker devices and server rely on ISO UTC timestamps; client punches with timestamps more than 5 minutes in the future are rejected.
+2. **Single Active Site Assignment**: Each worker is assigned to one primary facility or construction site at a given time.
+3. **Browser Audio Support**: Voice recording and speech synthesis rely on standard Web Speech APIs; browsers lacking speech support fall back gracefully to text.
