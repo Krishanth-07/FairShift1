@@ -62,22 +62,41 @@ function setupLanguageSwitcher() {
 function setupEventListeners() {
   // Login form
   const loginForm = document.getElementById('admin-login-form');
-  loginForm.addEventListener('submit', handleLogin);
+  if (loginForm) {
+    loginForm.addEventListener('submit', handleLogin);
+  }
+
+  // Submit button fallback handler
+  const submitBtn = document.getElementById('btn-admin-login-submit');
+  if (submitBtn) {
+    submitBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleLogin(e);
+    });
+  }
 
   // Logout button
   const logoutBtn = document.getElementById('btn-admin-logout');
-  logoutBtn.addEventListener('click', handleLogout);
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', handleLogout);
+  }
 
   // Payroll editor form
   const payrollForm = document.getElementById('payroll-editor-form');
-  payrollForm.addEventListener('submit', handleSavePayroll);
+  if (payrollForm) {
+    payrollForm.addEventListener('submit', handleSavePayroll);
+  }
 
   // Day confirmation & dispute buttons
   const confirmBtn = document.getElementById('btn-admin-confirm-day');
-  confirmBtn.addEventListener('click', handleConfirmDay);
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', handleConfirmDay);
+  }
 
   const disputeBtn = document.getElementById('btn-admin-dispute-day');
-  disputeBtn.addEventListener('click', handleDisputeDay);
+  if (disputeBtn) {
+    disputeBtn.addEventListener('click', handleDisputeDay);
+  }
 
   // Quick Demo admin cards click delegation
   const demoList = document.getElementById('demo-admins-list');
@@ -87,19 +106,27 @@ function setupEventListeners() {
       if (!btn) return;
       const adminId = btn.dataset.adminId;
       if (adminId) {
-        try {
-          const res = await apiRequest('/api/auth/demo-login', {
-            method: 'POST',
-            body: { userId: adminId }
-          });
-          currentUser = res.user;
-          showDashboardView();
-          await loadDashboardData();
-        } catch (err) {
-          showError('admin-login-error', err.message);
-        }
+        await handleDemoLogin(adminId);
       }
     });
+  }
+}
+
+/**
+ * Fast login handler for demo admin accounts.
+ * @param {string} adminId
+ */
+async function handleDemoLogin(adminId) {
+  try {
+    const res = await apiRequest('/api/auth/demo-login', {
+      method: 'POST',
+      body: { userId: adminId }
+    });
+    currentUser = res.user;
+    showDashboardView();
+    await loadDashboardData();
+  } catch (err) {
+    showError('admin-login-error', err.message || 'Demo login failed.');
   }
 }
 
@@ -138,20 +165,6 @@ async function showLoginView() {
 
         btn.appendChild(nameSpan);
         btn.appendChild(siteSpan);
-
-        btn.addEventListener('click', async () => {
-          try {
-            const res = await apiRequest('/api/auth/demo-login', {
-              method: 'POST',
-              body: { userId: admin.id }
-            });
-            currentUser = res.user;
-            showDashboardView();
-            await loadDashboardData();
-          } catch (err) {
-            showError('admin-login-error', err.message);
-          }
-        });
 
         list.appendChild(btn);
       }
@@ -549,22 +562,17 @@ function renderFeedbackPanel(aggregate) {
       label.className = 'bar-label';
       label.textContent = tag;
 
-      const track = document.createElement('div');
-      track.className = 'bar-track';
-
-      const fill = document.createElement('div');
-      fill.className = 'bar-fill';
-      const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
-      fill.style.width = `${pct}%`;
-
-      track.appendChild(fill);
+      const prog = document.createElement('progress');
+      prog.className = 'bar-progress';
+      prog.max = 100;
+      prog.value = maxCount > 0 ? Math.round((count / maxCount) * 100) : 0;
 
       const countSpan = document.createElement('span');
       countSpan.className = 'bar-count';
       countSpan.textContent = String(count);
 
       row.appendChild(label);
-      row.appendChild(track);
+      row.appendChild(prog);
       row.appendChild(countSpan);
       barsContainer.appendChild(row);
     }
@@ -727,4 +735,8 @@ function showError(elementId, msg) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}

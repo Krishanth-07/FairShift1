@@ -1080,4 +1080,8 @@ async function initApp() {
 }
 
 // Bootstrap once DOM content is ready
-document.addEventListener('DOMContentLoaded', initApp);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
