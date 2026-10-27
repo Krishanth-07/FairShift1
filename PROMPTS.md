@@ -28,3 +28,19 @@ This document logs the key prompts and instructions used in designing and develo
   - Build pure `src/engine/anomaly.js` (neutral review flags for DUPLICATE_IN, IMPOSSIBLE_SESSION, LATE_SYNC, OVERTIME_SPIKE, NIGHT_ROSTER_MISMATCH, detectCloneCheckins).
   - Comprehensive `node:test` suite with 65 passing assertions.
 
+---
+
+## Prompt 3: Pure Decision Engine Foundation (Part 2) & Test Suite
+
+- **Date**: 2026-10-27
+- **Role**: Antigravity AI Pair Programmer
+- **Prompt Summary**:
+  - Build `src/engine/fatigue.js` (DAILY_MAX, WEEKLY_MAX rolling 7-day, MIN_REST gap, CONSECUTIVE_NIGHTS hospital-only).
+  - Build `src/config/keywords.js` (English, Tamil, Hindi category keywords + critical keywords with native-speaker review notes).
+  - Build `src/engine/triage.js` (triageByRules with multilingual matching, mergeTriage that never lowers severity).
+  - Build `src/engine/escalation.js` (deadline evaluation, resolved never escalates).
+  - Build `src/engine/risk.js` (0–100 retention risk score, never uses anonymous feedback).
+  - Build `src/engine/anonymity.js` (MIN_GROUP_SIZE=5, assertAnonymous rejecting PII fields and time-granular timestamps, aggregateFeedback with k-anonymity).
+  - Build `src/engine/advocate.js` (priority: rest-required > underpaid > escalated hazard > watch > anomalies > all-clear).
+  - Comprehensive tests: 126 passing assertions across both industries.
+
