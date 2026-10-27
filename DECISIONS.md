@@ -39,3 +39,28 @@ This document records the architectural and technology decisions made for FairSh
   - `compression`: Payload compression for low-bandwidth mobile devices.
   - `@google/genai`: Official SDK for Gemini integration (multilingual hazard analysis and voice-to-text processing).
 - **Rule**: Any addition beyond this list must be documented and justified in this file.
+
+---
+
+## ADR 004: Two-Sided Trust via Per-Worker Hash Chains and HMAC Digital Receipts
+
+- **Status**: Accepted
+- **Context**: Frontline workers frequently suffer wage theft or uncounted overtime when hours records are unilaterally managed by employers.
+- **Decision**: Every punch event is appended to an individual SHA-256 hash chain per worker. Each record references the predecessor's hash (`prevHash`) and is sealed with an HMAC-SHA256 digital receipt signature. The employer dashboard provides a `/api/admin/integrity` endpoint to detect any retroactive modification or record deletion.
+- **Consequences**:
+  - Tamper-evident proof of work for employees.
+  - Any historical database alteration is immediately detected.
+
+---
+
+## ADR 005: Worker-First Privacy Architecture (k-Anonymity & Unlinkable Monthly Markers)
+
+- **Status**: Accepted
+- **Context**: Frontline workers hesitate to report hazardous equipment or voice negative feedback about managers due to fear of retaliation.
+- **Decision**:
+  1. Hazard reports strictly store zero worker identity fields (`workerId`, `userId`, `name`, `ipAddress`). Reports receive an alphanumeric tracking code (`FS-XXXX-XXXX`) allowing workers to monitor remediation progress without logging in.
+  2. Anonymous feedback enforces a 1-per-month rate limit using an irreversible HMAC marker stored separately in `submissionMarkers`. Stored feedback records contain only date-level granularity (`YYYY-MM-DD`).
+  3. Aggregate sentiment is hidden from employers unless at least 5 distinct workers have submitted feedback (`MIN_GROUP_SIZE = 5`), guaranteeing k-anonymity.
+- **Consequences**:
+  - Absolute protection against whistleblower retaliation.
+  - Unlinkable monthly rate-limiting prevents feedback spam without de-anonymizing workers.

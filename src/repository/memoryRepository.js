@@ -172,6 +172,18 @@ export function createMemoryRepository() {
     // ─── Utility ──────────────────────────────────────────
     isEmpty() {
       return store.sites.size === 0 && store.users.size === 0;
+    },
+    /**
+     * Replaces a stored record at an index to simulate tampering / bit rot in integrity tests.
+     * @param {string} workerId
+     * @param {number} index
+     * @param {object} tamperedRecord
+     */
+    _tamperRecordForTesting(workerId, index, tamperedRecord) {
+      const chain = store.records.get(workerId);
+      if (chain && chain[index]) {
+        chain[index] = clone(tamperedRecord);
+      }
     }
   };
 }

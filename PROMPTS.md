@@ -67,4 +67,19 @@ This document logs the key prompts and instructions used in designing and develo
   - Build `src/app.js` and `src/server.js`.
   - Tests in `tests/auth.test.js` and `tests/security.test.js`: 140 passing assertions.
 
+---
+
+## Prompt 5: Core Services, API Routing, Docker & End-to-End Test Suite
+
+- **Date**: 2026-10-27
+- **Role**: Antigravity AI Pair Programmer
+- **Prompt Summary**:
+  - Build services: `recordService.js` (time boundaries, site code check, deduplication, hash chain, digital receipt, offline batch sync), `payslipService.js` (payslips with reconciliation and audit trails), `adviceService.js` (advocate advisory), `reportService.js` (anonymous hazard reports with tracking code `FS-XXXX-XXXX`, linear status transitions), `feedbackService.js` (unlinkable HMAC monthly markers, k-anonymity with MIN_GROUP_SIZE=5), `adminService.js` (site overview, auditLog payroll edits, day status confirm/dispute, chain integrity audit).
+  - Build schema transparency: `schemaFields.js` and `GET /api/public/what-we-store`.
+  - Build routes: `workerRoutes.js` (records, sync, status, payslip, advice, reports, feedback, dispute) and `adminRoutes.js` (scoped strictly to `req.user.siteId`).
+  - Containerization: `Dockerfile` (node:20-alpine, non-root user, `npm ci --omit=dev`) and `.dockerignore`.
+  - Comprehensive end-to-end API test suite in `tests/api/api.test.js`: 163 passing assertions covering authorization, cross-tenant isolation, idempotency, tampering detection, k-anonymity, and validation.
+  - Updated `README.md` and `DECISIONS.md`.
+
+
 
