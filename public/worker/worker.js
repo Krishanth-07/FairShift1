@@ -246,6 +246,8 @@ function renderDynamicUI() {
       badge.textContent = `${state.currentUser.name} (${state.currentUser.id})`;
     }
     updatePunchButtonUI();
+    loadAdvocateAdvisory();
+    loadPayslip();
   }
 }
 
@@ -588,14 +590,16 @@ function setupSpeechReadAloud() {
   const readAdvocateBtn = document.getElementById('btn-read-advocate');
   if (readAdvocateBtn) {
     readAdvocateBtn.addEventListener('click', () => {
-      speak(state.activeAdvocateText || 'All Clear', getCurrentLanguage());
+      const textToRead = state.activeAdvocateText || t('advocate.headline.all_clear');
+      speak(textToRead, getCurrentLanguage());
     });
   }
 
   const readUnderpaidBtn = document.getElementById('btn-read-underpaid');
   if (readUnderpaidBtn) {
     readUnderpaidBtn.addEventListener('click', () => {
-      speak(state.activeDiscrepancyText || 'Pay Advisory', getCurrentLanguage());
+      const textToRead = state.activeDiscrepancyText || t('advocate.headline.underpaid');
+      speak(textToRead, getCurrentLanguage());
     });
   }
 }
@@ -641,7 +645,7 @@ function renderPayslip(payslip) {
   // Underpaid condition check
   if (payslip.reconciliation && payslip.reconciliation.status === 'underpaid') {
     if (underpaidCard) underpaidCard.hidden = false;
-    const owedFormatted = formatInr(payslip.owedPaise);
+    const owedFormatted = ((payslip.owedPaise || 0) / 100).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const loggedHours = Math.round((payslip.reconciliation.diffNormalMinutes + (payslip.payrollEntries?.[0]?.normalMinutes || 0)) / 60 * 10) / 10;
     const paidHours = Math.round((payslip.payrollEntries?.[0]?.normalMinutes || 0) / 60 * 10) / 10;
 

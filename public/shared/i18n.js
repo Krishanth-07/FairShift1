@@ -83,6 +83,9 @@ export function getCurrentLanguage() {
   return currentLang;
 }
 
+/** Alias for getCurrentLanguage */
+export const getLanguage = getCurrentLanguage;
+
 /**
  * Translates a key with optional parameter interpolation.
  * Falls back to English bundle if missing, then to raw key.
@@ -141,3 +144,6 @@ export function applyI18n(root = document) {
     }
   }
 }
+
+/** Alias for applyI18n */
+export const translateDOM = applyI18n;

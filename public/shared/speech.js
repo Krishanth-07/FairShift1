@@ -12,6 +12,71 @@ const LANG_MAP = {
   hi: 'hi-IN'
 };
 
+// Global reference holding active utterance to prevent Chrome GC mid-speech termination
+let activeUtterance = null;
+let cachedVoices = [];
+
+/**
+ * Pre-caches browser voices when available.
+ */
+function initVoices() {
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    cachedVoices = window.speechSynthesis.getVoices();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        cachedVoices = window.speechSynthesis.getVoices();
+      };
+    }
+  }
+}
+
+initVoices();
+
+/**
+ * Finds the most suitable SpeechSynthesisVoice matching the language.
+ *
+ * @param {string} lang - Language code ('en' | 'ta' | 'hi').
+ * @returns {SpeechSynthesisVoice | null}
+ */
+function findVoice(lang) {
+  const voices = cachedVoices.length > 0 ? cachedVoices : (window.speechSynthesis ? window.speechSynthesis.getVoices() : []);
+  if (!voices || voices.length === 0) return null;
+
+  const targetCode = (LANG_MAP[lang] || 'en-IN').toLowerCase();
+  const primaryCode = lang.toLowerCase().split('-')[0];
+
+  // 1. Exact match e.g. 'ta-in' or 'ta_in'
+  let match = voices.find((v) => v.lang.toLowerCase().replace('_', '-') === targetCode);
+  if (match) return match;
+
+  // 2. Starts with target e.g. 'ta-in-x-...'
+  match = voices.find((v) => v.lang.toLowerCase().replace('_', '-').startsWith(targetCode));
+  if (match) return match;
+
+  // 3. Primary language code match e.g. 'ta' or 'hi'
+  match = voices.find((v) => v.lang.toLowerCase().split(/[-_]/)[0] === primaryCode);
+  if (match) return match;
+
+  // 4. Voice name heuristic (e.g. contains 'tamil' or 'hindi')
+  if (primaryCode === 'ta') {
+    match = voices.find((v) => v.name.toLowerCase().includes('tamil'));
+    if (match) return match;
+  }
+  if (primaryCode === 'hi') {
+    match = voices.find((v) => v.name.toLowerCase().includes('hindi'));
+    if (match) return match;
+  }
+
+  // For English, allow standard en voices
+  if (primaryCode === 'en') {
+    match = voices.find((v) => v.lang.toLowerCase().startsWith('en'));
+    if (match) return match;
+  }
+
+  // Never return an English voice for Tamil or Hindi; let browser cloud synthesizer handle target lang
+  return null;
+}
+
 /**
  * Reads aloud text content using the browser's native speech synthesis.
  * Fails silently if speech synthesis is disabled or unsupported.
@@ -20,7 +85,7 @@ const LANG_MAP = {
  * @param {string} [lang='en'] - Language code ('en' | 'ta' | 'hi').
  */
 export function speak(text, lang = 'en') {
-  if (!('speechSynthesis' in window) || !text) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window) || !text) {
     return;
   }
 
@@ -28,17 +93,25 @@ export function speak(text, lang = 'en') {
     // Cancel any previous utterance to prevent audio queue pile-up
     window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(String(text));
-    utterance.lang = LANG_MAP[lang] || 'en-IN';
+    const targetLangCode = LANG_MAP[lang] || 'en-IN';
+    const utterance = new SpeechSynthesisUtterance(String(text).trim());
+    utterance.lang = targetLangCode;
     utterance.rate = 0.95; // Slightly slower pacing for enhanced clarity
 
-    // Select matching Indian regional voice if available in browser voice list
-    const voices = window.speechSynthesis.getVoices();
-    const targetPrefix = LANG_MAP[lang] || 'en-IN';
-    const match = voices.find((v) => v.lang.replace('_', '-').startsWith(targetPrefix));
-    if (match) {
-      utterance.voice = match;
+    const voice = findVoice(lang);
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
     }
+
+    activeUtterance = utterance;
+    utterance.onend = () => {
+      activeUtterance = null;
+    };
+    utterance.onerror = (e) => {
+      console.warn('[FairShift Speech] Utterance error:', e);
+      activeUtterance = null;
+    };
 
     window.speechSynthesis.speak(utterance);
   } catch (err) {
