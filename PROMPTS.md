@@ -44,3 +44,27 @@ This document logs the key prompts and instructions used in designing and develo
   - Build `src/engine/advocate.js` (priority: rest-required > underpaid > escalated hazard > watch > anomalies > all-clear).
   - Comprehensive tests: 126 passing assertions across both industries.
 
+---
+
+## Prompt 4: App Server, Auth, Memory Repository, Seed Data & Security Middleware
+
+- **Date**: 2026-10-27
+- **Role**: Antigravity AI Pair Programmer
+- **Prompt Summary**:
+  - Install runtime dependencies: `express`, `helmet`, `express-rate-limit`, `compression`. Zero AI packages installed.
+  - Build `src/config/env.js`: frozen config, random fallback secrets with single warning, hidden in prod.
+  - Build `src/services/clock.js`: `systemClock` and `createFakeClock`.
+  - Build `src/repository/memoryRepository.js`: in-memory store with narrow interface, deep clone returns, hash chain verification on appendRecord.
+  - Build `src/repository/seed.js`: deterministic data for construction and hospital with 7 planted scenarios.
+  - Build `src/services/auth.js`: scrypt PIN hashing with per-user salt and timingSafeEqual, custom HMAC-SHA256 session tokens.
+  - Build `src/middleware/`:
+    - `security.js` (helmet strict CSP, compression, 20kb JSON limit, trust proxy 1).
+    - `rateLimits.js` (general 300/15m, login 10/15m, reports 20/h, feedback 10/h).
+    - `requireAuth.js` (session cookie verification, role check, CSRF header requirement on mutations).
+    - `validate.js` (strict body schema validation rejecting unknown keys).
+    - `errors.js` (AppError, JSON 404, central handler with zero stack trace leaks).
+  - Build `src/routes/authRoutes.js`: login, logout, me, demo-login (only in DEMO_MODE), /healthz.
+  - Build `src/app.js` and `src/server.js`.
+  - Tests in `tests/auth.test.js` and `tests/security.test.js`: 140 passing assertions.
+
+
