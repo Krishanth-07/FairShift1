@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FairShift - Employer & Site Admin Dashboard</title>
+  <link rel="stylesheet" href="../shared/base.css">
+  <link rel="stylesheet" href="./admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Header -->
+    <header class="admin-header">
+      <div class="header-brand-group">
+        <span class="brand-icon" aria-hidden="true">🛡️</span>
+        <h1 class="brand-title">FairShift Admin</h1>
+        <div id="site-header-badge" class="site-badge-group" hidden>
+          <span id="site-name-text" class="site-name-heading"></span>
+          <span id="site-industry-badge" class="industry-pill"></span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Language Selector -->
+        <div class="lang-selector" role="group" aria-label="Language Selector">
+          <button type="button" class="lang-btn" data-lang="en" aria-label="Switch to English">EN</button>
+          <button type="button" class="lang-btn" data-lang="ta" aria-label="தமிழுக்கு மாறவும்">தமிழ்</button>
+          <button type="button" class="lang-btn" data-lang="hi" aria-label="हिन्दी में बदलें">हिन्दी</button>
+        </div>
+
+        <button type="button" id="btn-admin-logout" class="btn-logout" hidden data-i18n="nav.logout">Log Out</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" class="admin-main">
+      <!-- ─── Admin Login View ─────────────────────────────────── -->
+      <section id="view-admin-login" class="admin-login-view">
+        <div class="login-hero">
+          <h2 data-i18n="admin.title">Site Operations & Trust Dashboard</h2>
+          <p data-i18n="admin.subtitle">Frontline Workforce Verification & Compliance</p>
+        </div>
+
+        <!-- Demo Admin Cards (Available in DEMO_MODE) -->
+        <div id="demo-admins-container" class="demo-admins-section" hidden>
+          <h3 data-i18n="admin.demo_title">Quick Demo Admin Login</h3>
+          <div id="demo-admins-list" class="demo-cards-list"></div>
+        </div>
+
+        <!-- Standard PIN Login Form -->
+        <form id="admin-login-form" novalidate>
+          <div class="form-group">
+            <label for="input-admin-id" data-i18n="login.userId">Admin User ID</label>
+            <input type="text" id="input-admin-id" name="userId" autocomplete="username" required>
+          </div>
+
+          <div class="form-group">
+            <label for="input-admin-pin" data-i18n="login.pin">PIN (4-8 digits)</label>
+            <input type="password" id="input-admin-pin" name="pin" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="current-password" required>
+          </div>
+
+          <div id="admin-login-error" class="error-msg" role="alert" hidden></div>
+
+          <button type="submit" id="btn-admin-login-submit" class="btn-primary btn-block" data-i18n="login.submit">Log In to Dashboard</button>
+        </form>
+      </section>
+
+      <!-- ─── Admin Authenticated Dashboard View ───────────────── -->
+      <div id="view-admin-dashboard" hidden>
+        <!-- 1. Overview Cards Grid -->
+        <section class="overview-cards-grid" aria-label="Operational Metrics">
+          <!-- Live Rotating Site Code Card -->
+          <article class="overview-card site-code-card">
+            <div class="overview-card-header">
+              <span class="card-label" data-i18n="admin.site_code_title">Active Rotating Site Code</span>
+              <span class="card-icon" aria-hidden="true">🔢</span>
+            </div>
+            <div class="code-display-row">
+              <span id="display-site-code" class="huge-site-code">------</span>
+              <div class="countdown-box">
+                <span aria-hidden="true">⏱️</span>
+                <span id="countdown-text">--s remaining</span>
+              </div>
+            </div>
+            <p class="card-note" data-i18n="admin.site_code_desc">Broadcast this code to frontline workers. Rotates every 5 minutes.</p>
+          </article>
+
+          <!-- Cryptographic Chain Integrity Card -->
+          <article class="overview-card">
+            <div class="overview-card-header">
+              <span class="card-label" data-i18n="admin.integrity_title">Cryptographic Chain Integrity</span>
+              <span class="card-icon" aria-hidden="true">🔗</span>
+            </div>
+            <div id="integrity-badge-container">
+              <span id="integrity-status-badge" class="integrity-badge integrity-verified">Verified</span>
+            </div>
+            <p id="integrity-details" class="card-note"></p>
+          </article>
+
+          <!-- Attendance Card -->
+          <article class="overview-card">
+            <div class="overview-card-header">
+              <span class="card-label" data-i18n="admin.attendance_title">Live Attendance</span>
+              <span class="card-icon" aria-hidden="true">👥</span>
+            </div>
+            <span id="metric-attendance" class="card-metric">0 / 0</span>
+            <p id="metric-attendance-sub" class="card-note">Active on-site shifts</p>
+          </article>
+
+          <!-- Fatigue Alert Count Card -->
+          <article class="overview-card">
+            <div class="overview-card-header">
+              <span class="card-label" data-i18n="admin.fatigue_title">Fatigue Alerts</span>
+              <span class="card-icon" aria-hidden="true">⚠️</span>
+            </div>
+            <span id="metric-fatigue" class="card-metric">0</span>
+            <p class="card-note">Rest required or watch flags</p>
+          </article>
+
+          <!-- Escalated Hazards Card -->
+          <article class="overview-card">
+            <div class="overview-card-header">
+              <span class="card-label" data-i18n="admin.escalated_title">Escalated Hazards</span>
+              <span class="card-icon" aria-hidden="true">🚨</span>
+            </div>
+            <span id="metric-escalated" class="card-metric">0</span>
+            <p class="card-note">Past resolution deadline</p>
+          </article>
+        </section>
+
+        <!-- 2. Fatigue & Operational Anomalies Table -->
+        <section class="dashboard-section" aria-labelledby="heading-anomalies">
+          <div class="section-header">
+            <h2 id="heading-anomalies" class="section-title" data-i18n="admin.anomalies_title">Operational Review & Fatigue Flags</h2>
+          </div>
+          <div class="table-responsive">
+            <table class="admin-table">
+              <caption data-i18n="admin.anomalies_caption">Operational Anomalies & Fatigue Flags (Neutral Review)</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Worker</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Flag ID</th>
+                  <th scope="col">Plain-Language Operational Explanation</th>
+                </tr>
+              </thead>
+              <tbody id="table-anomalies-body">
+                <tr><td colspan="4" class="text-muted" data-i18n="common.loading">Loading flags...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 3. Workplace Hazard Reports Table -->
+        <section class="dashboard-section" aria-labelledby="heading-reports">
+          <div class="section-header">
+            <h2 id="heading-reports" class="section-title" data-i18n="admin.reports_title">Workplace Hazard Reports</h2>
+          </div>
+          <div class="table-responsive">
+            <table class="admin-table">
+              <caption>Workplace Hazard Remediation Queue (Escalated Reports First)</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Tracking Code</th>
+                  <th scope="col">Severity</th>
+                  <th scope="col">Escalation Status</th>
+                  <th scope="col">Hazard Description</th>
+                  <th scope="col">Action / Status</th>
+                </tr>
+              </thead>
+              <tbody id="table-reports-body">
+                <tr><td colspan="5" class="text-muted" data-i18n="common.loading">Loading hazard reports...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 4. Anonymous Pulse Feedback & Sentiment (k-Anonymity) -->
+        <section class="dashboard-section" aria-labelledby="heading-feedback">
+          <div class="section-header">
+            <h2 id="heading-feedback" class="section-title" data-i18n="admin.feedback_title">Anonymous Worker Voice (k-Anonymity Protected)</h2>
+          </div>
+          <div id="feedback-panel-container" class="feedback-box">
+            <p class="text-muted" data-i18n="common.loading">Loading feedback aggregate...</p>
+          </div>
+        </section>
+
+        <!-- 5. Worker Retention Risk Scoring -->
+        <section class="dashboard-section" aria-labelledby="heading-risk">
+          <div class="section-header">
+            <h2 id="heading-risk" class="section-title" data-i18n="admin.risk_title">Worker Retention Risk Scoring</h2>
+          </div>
+          <div id="risk-cards-container" class="risk-cards-grid">
+            <p class="text-muted" data-i18n="common.loading">Loading risk assessments...</p>
+          </div>
+        </section>
+
+        <!-- 6. Auditable Payroll Editor & Shift Day Resolution -->
+        <section class="dashboard-section" aria-labelledby="heading-payroll">
+          <div class="section-header">
+            <h2 id="heading-payroll" class="section-title" data-i18n="admin.payroll_title">Payroll Minutes & Shift Day Resolution</h2>
+          </div>
+          <p class="payroll-note" data-i18n="admin.payroll_note">Worker will see any payroll adjustments in their transparent payslip audit log.</p>
+
+          <form id="payroll-editor-form" class="payroll-form" novalidate>
+            <div class="form-group">
+              <label for="select-payroll-worker">Select Worker:</label>
+              <select id="select-payroll-worker" required class="status-select"></select>
+            </div>
+
+            <div class="form-group">
+              <label for="input-payroll-date">Shift Date:</label>
+              <input type="date" id="input-payroll-date" required>
+            </div>
+
+            <div class="form-group">
+              <label for="input-payroll-normal">Regular Minutes:</label>
+              <input type="number" id="input-payroll-normal" min="0" step="15" value="480" required>
+            </div>
+
+            <div class="form-group">
+              <label for="input-payroll-overtime">Overtime Minutes:</label>
+              <input type="number" id="input-payroll-overtime" min="0" step="15" value="0" required>
+            </div>
+
+            <div class="form-group">
+              <button type="submit" id="btn-save-payroll" class="btn-primary" data-i18n="admin.save_payroll">Save Payroll Adjustment</button>
+            </div>
+          </form>
+
+          <div class="payroll-actions-row">
+            <button type="button" id="btn-admin-confirm-day" class="btn-secondary-action" data-i18n="admin.confirm_day">Confirm Day</button>
+            <button type="button" id="btn-admin-dispute-day" class="btn-danger-action" data-i18n="admin.dispute_day">Dispute Day</button>
+          </div>
+
+          <div id="payroll-feedback-msg" class="card-note" aria-live="polite"></div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="admin-footer">
+      <nav class="footer-links" aria-label="Admin Footer Navigation">
+        <a href="/">FairShift Home</a>
+        <a href="/worker/">Worker App</a>
+        <a href="/trust/">Data Retention Guarantee (What We Store)</a>
+        <a href="/api/public/what-we-store">JSON Transparency Schema</a>
+      </nav>
+      <p>FairShift Admin Dashboard &bull; UN SDG 8 Decent Work &bull; Pure Explainable Decision Engine</p>
+    </footer>
+  </div>
+
+  <script type="module" src="./admin.js"></script>
+</body>
+</html>

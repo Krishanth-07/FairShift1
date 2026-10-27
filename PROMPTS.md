@@ -106,6 +106,31 @@ This document logs the key prompts and instructions used in designing and develo
     - `tests/static.test.js`: Verified semantic HTML tags (`lang`, `<title>`, `<main>`), zero inline script blocks, zero inline styles, and zero `innerHTML` usage in `public/`.
   - Full suite: 172 tests across 59 suites passing cleanly.
 
+---
+
+## Prompt 7: Employer Dashboard, Trust Transparency Page, Landing Page & WCAG Contrast Suite
+
+- **Date**: 2026-10-27
+- **Role**: Antigravity AI Pair Programmer
+- **Prompt Summary**:
+  - Built `public/admin/`:
+    - `index.html`: Desktop-first responsive dashboard with semantic markup (`<main>`, `<table>`, `<caption>`, `<th scope="col">`, `<th scope="row">`, `<fieldset>`), zero inline scripts, and zero inline styles.
+    - `admin.css`: High-contrast dashboard styling, 44px tap targets, prominent rotating site code card, accessible severity chips.
+    - `admin.js`: Vanilla JS dashboard handling demo admin quick-login, overview cards (attendance, fatigue alert count, escalated hazard count, cryptographic chain integrity status), live TOTP rotating site code with live countdown timer and automatic re-fetch, fatigue & operational anomaly review table with neutral wording, hazard report table sorted escalated first with status transition dropdown, k-anonymous pulse feedback panel (showing insufficient responses notice when < 5 or unlocked CSS bar distributions when >= 5), retention risk cards with explicit operational reasons, and auditable payroll editor with shift day confirmation and dispute actions. Strictly avoids `innerHTML`.
+  - Built `public/trust/`:
+    - `index.html`, `trust.css`, `trust.js`: Transparent data retention specification page rendering `/api/public/what-we-store` as two plain lists (what FairShift stores vs what FairShift NEVER stores) across records, reports, and feedback, with human-readable explanations and full internationalization. Linked from worker feedback screen and admin footer.
+  - Built landing page at `/` (`public/index.html` & `public/landing.css`):
+    - Featured thesis: "Workers and employers shouldn't have to trust each other. They should be able to check."
+    - Two large primary action cards (Worker App, Admin Dashboard) plus Trust Guarantee link.
+    - Configured static asset long cache headers (`max-age=31536000, immutable`) in `src/app.js` with `no-cache, must-revalidate` for HTML files.
+  - Built `tests/contrast.test.js`:
+    - Parsed CSS custom properties from `base.css` and computed exact WCAG 2.1 relative luminance and contrast ratios.
+    - Tested explicit text/background pairs for normal text (>= 4.5:1) and graphical boundaries (>= 3.0:1).
+    - Hardened color palette: updated `--accent-primary` to `#0369a1` (5.93:1 with white), `--border-strong` to `#64748b` (4.7:1 with white), and `--text-muted` to `#526071` (>= 5.8:1 on all backgrounds).
+  - Updated `README.md` with interactive 4-step demo walkthrough, demo user credentials and planted scenarios, accessibility notes, and expanded honest limits.
+  - Full suite: 174 tests across 60 suites passing cleanly.
+
+
 
 
 

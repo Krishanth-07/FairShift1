@@ -46,8 +46,18 @@ export function createApp({ config, repo, clock }) {
   // General traffic rate limiter
   app.use(generalLimiter);
 
-  // Serve static UI assets from public directory
-  app.use(express.static(PUBLIC_DIR));
+  // Serve static UI assets from public directory with cache headers
+  app.use(
+    express.static(PUBLIC_DIR, {
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+        } else {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        }
+      }
+    })
+  );
 
   // Instantiate service layer
   const recordService = createRecordService({ config, repo, clock });

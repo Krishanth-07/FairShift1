@@ -19,15 +19,15 @@
 
   --text-primary: #0f172a;
   --text-secondary: #475569;
-  --text-muted: #64748b;
+  --text-muted: #526071;         /* Deeper slate gray (>= 5.8:1 on all surfaces) */
   --text-on-accent: #ffffff;
 
   --border-subtle: #e2e8f0;
-  --border-strong: #94a3b8;
+  --border-strong: #64748b;      /* High-contrast border (4.7:1 on white, >3:1 requirement) */
 
-  --accent-primary: #0284c7;     /* High-contrast blue (4.6:1 on white) */
-  --accent-primary-hover: #0369a1;
-  --accent-secondary: #0d9488;   /* Teal */
+  --accent-primary: #0369a1;     /* High-contrast WCAG 2.1 AA compliant blue (5.9:1 with white) */
+  --accent-primary-hover: #075985;
+  --accent-secondary: #0f766e;   /* Deep teal (5.6:1 with white) */
 
   /* Status Colors (Always paired with text and icon) */
   --status-ok: #15803d;          /* Deep green */

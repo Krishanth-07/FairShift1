@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FairShift - Data Retention & Privacy Guarantee</title>
+  <link rel="stylesheet" href="../shared/base.css">
+  <link rel="stylesheet" href="./trust.css">
+</head>
+<body>
+  <div class="trust-page">
+    <header class="trust-header">
+      <div class="header-left">
+        <a href="/" class="nav-back-link" aria-label="Back to FairShift Home">
+          <span aria-hidden="true">&larr;</span>
+          <span>Home</span>
+        </a>
+        <div class="brand-wrapper">
+          <span class="brand-icon" aria-hidden="true">🛡️</span>
+          <h1 class="brand-heading">FairShift Trust Guarantee</h1>
+        </div>
+      </div>
+
+      <div class="lang-selector" role="group" aria-label="Language Selector">
+        <button type="button" class="lang-btn" data-lang="en" aria-label="Switch to English">EN</button>
+        <button type="button" class="lang-btn" data-lang="ta" aria-label="தமிழுக்கு மாறவும்">தமிழ்</button>
+        <button type="button" class="lang-btn" data-lang="hi" aria-label="हिन्दी में बदलें">हिन्दी</button>
+      </div>
+    </header>
+
+    <main id="main-content" class="trust-content">
+      <div class="trust-hero">
+        <h2 class="trust-title" data-i18n="trust.title">Transparent Data Retention Contract</h2>
+        <p class="trust-subtitle" data-i18n="trust.subtitle">FairShift is engineered around an unbreachable privacy boundary. We prove working hours and hazard escalations cryptographically without tracking worker devices or collecting biometrics.</p>
+        <div class="guarantee-banner">
+          <span class="guarantee-icon" aria-hidden="true">🔒</span>
+          <span id="guarantee-text" data-i18n="trust.banner">Frontline Worker First: Zero biometric, continuous GPS, or device surveillance.</span>
+        </div>
+      </div>
+
+      <div class="lists-container">
+        <!-- What We Store -->
+        <section class="trust-column stored" aria-labelledby="stored-heading">
+          <div class="column-header">
+            <span class="column-icon" aria-hidden="true">📋</span>
+            <h3 id="stored-heading" class="column-title" data-i18n="trust.stored_title">What FairShift Stores</h3>
+          </div>
+          <div id="stored-lists-wrapper">
+            <p class="loading-state" data-i18n="common.loading">Loading transparent schema...</p>
+          </div>
+        </section>
+
+        <!-- What We NEVER Store -->
+        <section class="trust-column never-stored" aria-labelledby="never-stored-heading">
+          <div class="column-header">
+            <span class="column-icon" aria-hidden="true">🚫</span>
+            <h3 id="never-stored-heading" class="column-title" data-i18n="trust.never_stored_title">What FairShift NEVER Stores</h3>
+          </div>
+          <div id="never-stored-lists-wrapper">
+            <p class="loading-state" data-i18n="common.loading">Loading transparent schema...</p>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="trust-footer">
+      <p>Directly verified from shared system schemas via <a href="/api/public/what-we-store" target="_blank" rel="noopener noreferrer">/api/public/what-we-store</a>. Aligned with UN SDG 8 (Decent Work).</p>
+    </footer>
+  </div>
+
+  <script type="module" src="./trust.js"></script>
+</body>
+</html>
