@@ -167,6 +167,58 @@ describe('Authentication & Session Management', () => {
     }
   });
 
+  it('should return 404 for /api/auth/demo-users when DEMO_MODE is false', async () => {
+    const res = await fetch(`${baseUrl}/api/auth/demo-users`);
+    assert.equal(res.status, 404);
+  });
+
+  it('should return sanitized demo users for /api/auth/demo-users when DEMO_MODE is true', async () => {
+    const demoApp = createApp({
+      config: {
+        PORT: 0,
+        TZ_OFFSET_MINUTES: 330,
+        DEMO_MODE: true,
+        NODE_ENV: 'test',
+        SESSION_SECRET,
+        SITE_SECRET: 'test',
+        RECEIPT_SECRET: 'test',
+        FEEDBACK_SECRET: 'test',
+        SEED_PIN: PIN
+      },
+      repo,
+      clock
+    });
+
+    const demoServer = demoApp.listen(0);
+    const demoPort = demoServer.address().port;
+
+    try {
+      const res = await fetch(`http://127.0.0.1:${demoPort}/api/auth/demo-users`);
+      assert.equal(res.status, 200);
+      const data = await res.json();
+      assert.ok(Array.isArray(data));
+      assert.ok(data.length > 0);
+
+      // Verify each user has ONLY allowed fields and NO sensitive data
+      for (const u of data) {
+        assert.ok(u.id);
+        assert.ok(u.name);
+        assert.ok(u.role);
+        assert.ok(u.siteLabel);
+        assert.ok(u.language);
+
+        assert.equal(u.pinHash, undefined);
+        assert.equal(u.hourlyRatePaise, undefined);
+        assert.equal(u.pin, undefined);
+
+        const keys = Object.keys(u).sort();
+        assert.deepEqual(keys, ['id', 'language', 'name', 'role', 'siteLabel']);
+      }
+    } finally {
+      demoServer.close();
+    }
+  });
+
   it('should serve /healthz endpoint', async () => {
     const res = await fetch(`${baseUrl}/healthz`);
     assert.equal(res.status, 200);

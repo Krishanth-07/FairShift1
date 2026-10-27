@@ -81,5 +81,31 @@ This document logs the key prompts and instructions used in designing and develo
   - Comprehensive end-to-end API test suite in `tests/api/api.test.js`: 163 passing assertions covering authorization, cross-tenant isolation, idempotency, tampering detection, k-anonymity, and validation.
   - Updated `README.md` and `DECISIONS.md`.
 
+---
+
+## Prompt 6: Front-End Architecture, Multilingual Worker App & UI Test Suite
+
+- **Date**: 2026-10-27
+- **Role**: Antigravity AI Pair Programmer
+- **Prompt Summary**:
+  - Added `GET /api/auth/demo-users` to `src/routes/authRoutes.js` (available only when `DEMO_MODE=true`, returning sanitized roster without credentials or pay rates).
+  - Built `public/shared/`:
+    - `api.js`: Fetch wrapper sending `X-Requested-With: fairshift` on state-modifying requests, credentials inclusion, and 401 redirect.
+    - `i18n.js`: Dynamic client-side internationalization loading `/locales/{en,ta,hi}.json`, `{key}` template substitution, language persistence in `localStorage`, and DOM attribute translation.
+    - `speech.js`: Web Speech API integration with `speak()` (silent fallback, language-appropriate voices) and `listen()` (graceful failure on unsupported browsers).
+    - `icons.js`: Semantic inline SVGs built via `document.createElementNS` with visible text labels and `aria-hidden` attributes.
+    - `base.css`: CSS custom properties, WCAG 2.1 AA 44px minimum tap targets, 3px high-contrast focus rings, `prefers-reduced-motion` compliance.
+  - Built `public/locales/` (`en.json`, `ta.json`, `hi.json`): 145 synchronized translation keys covering all engine decision rules, service errors, and UI labels, written in accessible, spoken phrasing for low-literacy workers.
+  - Built `public/worker/`:
+    - `index.html`: Fully semantic, accessible markup (`<main>`, `<dialog>`, `<fieldset>`, `<nav>`), zero inline scripts and zero inline styles.
+    - `worker.css`: Mobile-first responsive styling, high contrast, touch-friendly controls.
+    - `worker.js`: Vanilla JS SPA handling demo user selection, PIN login, Advocate advisory, giant shift punch with rotating site code dialog, offline punch queue with automatic background sync, payslip view with dispute dialog and speech synthesis read-aloud, anonymous hazard reporting with voice input and tracking code lookup, and anonymous feedback with k-anonymity guarantee link. Strictly avoids `innerHTML`.
+  - Built comprehensive tests:
+    - `tests/auth.test.js`: Verified `demo-users` returns 404 when `DEMO_MODE=false` and returns sanitized array when `DEMO_MODE=true`.
+    - `tests/i18n.test.js`: Verified identical key sets across languages, zero empty strings, and full coverage of all `messageKey` occurrences in `src/engine/` and `src/services/`.
+    - `tests/static.test.js`: Verified semantic HTML tags (`lang`, `<title>`, `<main>`), zero inline script blocks, zero inline styles, and zero `innerHTML` usage in `public/`.
+  - Full suite: 172 tests across 59 suites passing cleanly.
+
+
 
 

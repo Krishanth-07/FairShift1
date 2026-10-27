@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FairShift - Worker App</title>
+  <link rel="stylesheet" href="../shared/base.css">
+  <link rel="stylesheet" href="./worker.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link" data-i18n="skip_link">Skip to main content</a>
+
+  <!-- Global Announcement Region -->
+  <div id="live-region" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Offline Status Banner -->
+  <aside id="offline-banner" class="offline-banner" hidden>
+    <span class="offline-dot" aria-hidden="true"></span>
+    <span id="offline-text" data-i18n="common.offline_banner">Offline Mode: Shifts will save to phone and sync automatically.</span>
+  </aside>
+
+  <!-- Top Application Header -->
+  <header class="app-header">
+    <div class="header-brand">
+      <span class="brand-shield" aria-hidden="true">🛡️</span>
+      <h1 class="brand-title">FairShift</h1>
+    </div>
+
+    <!-- Language Selector Dropdown / Buttons -->
+    <div class="lang-selector" role="group" aria-label="Language Selector">
+      <button type="button" class="lang-btn" data-lang="en" aria-label="Switch to English">EN</button>
+      <button type="button" class="lang-btn" data-lang="ta" aria-label="தமிழுக்கு மாறவும்">தமிழ்</button>
+      <button type="button" class="lang-btn" data-lang="hi" aria-label="हिन्दी में बदलें">हिन्दी</button>
+    </div>
+
+    <!-- Active User & Logout (Populated when logged in) -->
+    <div id="user-controls" class="user-controls" hidden>
+      <span id="user-badge" class="user-badge"></span>
+      <button type="button" id="logout-btn" class="btn-logout" data-i18n="nav.logout">Log Out</button>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main id="main-content" class="main-content">
+    
+    <!-- ─── Login View ───────────────────────────────────────────── -->
+    <section id="view-login" class="view-section">
+      <div class="login-hero">
+        <h2 class="hero-title" data-i18n="login.title">FairShift Worker App</h2>
+        <p class="hero-subtitle" data-i18n="login.subtitle">Verified Hours • Fair Pay • Safe Work</p>
+      </div>
+
+      <!-- Quick Demo Login Cards (Visible when DEMO_MODE is active) -->
+      <div id="demo-section" class="demo-section" hidden>
+        <h3 class="section-heading" data-i18n="login.demo_title">Quick Demo Login</h3>
+        <div id="demo-cards" class="demo-cards-grid"></div>
+        <div class="divider"><span data-i18n="login.or_use_pin">Or enter your credentials:</span></div>
+      </div>
+
+      <!-- Standard PIN Login Form -->
+      <form id="login-form" class="card login-form" novalidate>
+        <div class="form-group">
+          <label for="input-user-id" data-i18n="login.userId">Worker ID</label>
+          <input type="text" id="input-user-id" name="userId" autocomplete="username" required>
+        </div>
+
+        <div class="form-group">
+          <label for="input-pin" data-i18n="login.pin">PIN (4-8 digits)</label>
+          <input type="password" id="input-pin" name="pin" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="current-password" required>
+        </div>
+
+        <div id="login-error" class="error-msg" role="alert" hidden></div>
+
+        <button type="submit" id="btn-login-submit" class="btn-primary btn-block" data-i18n="login.submit">Log In</button>
+      </form>
+    </section>
+
+    <!-- ─── App Views (Hidden until authenticated) ────────────────── -->
+    <div id="view-app" class="app-views-container" hidden>
+
+      <!-- 1. Home / Advocate View -->
+      <section id="tab-home" class="tab-pane active" aria-labelledby="nav-tab-home">
+        <!-- Worker Trust Advocate Card -->
+        <article id="advocate-card" class="card advocate-card">
+          <div class="advocate-header">
+            <span id="advocate-icon" class="advocate-icon" aria-hidden="true">🛡️</span>
+            <div class="advocate-heading-group">
+              <span class="advocate-badge" data-i18n="home.advocate_title">Worker Trust Advocate</span>
+              <h2 id="advocate-headline" class="advocate-headline"></h2>
+            </div>
+            <button type="button" id="btn-read-advocate" class="btn-icon" aria-label="Read advice aloud">
+              <span id="speaker-icon-advocate" aria-hidden="true"></span>
+              <span class="sr-only" data-i18n="home.read_aloud">Read Aloud</span>
+            </button>
+          </div>
+          <div id="advocate-reasons-container" class="advocate-reasons" hidden>
+            <h3 class="reasons-title" data-i18n="home.why_reasons">Why this advice?</h3>
+            <ul id="advocate-reasons-list" class="reasons-list"></ul>
+          </div>
+        </article>
+
+        <!-- Current Shift Status Card -->
+        <article class="card status-card">
+          <div class="status-header">
+            <h3 data-i18n="home.today_status">Today's Status</h3>
+            <span id="shift-state-badge" class="badge"></span>
+          </div>
+          <p id="shift-state-desc" class="status-desc" data-i18n="home.no_active_session">Not checked in right now.</p>
+          <div id="queue-indicator" class="queue-indicator" hidden>
+            <span id="queue-indicator-text"></span>
+          </div>
+        </article>
+
+        <!-- The Giant Shift Punch Button -->
+        <div class="punch-container">
+          <button type="button" id="btn-giant-punch" class="btn-giant-punch" aria-live="polite">
+            <span id="punch-btn-icon" class="punch-icon" aria-hidden="true"></span>
+            <span id="punch-btn-text" class="punch-text" data-i18n="home.checkin_btn">Check In to Shift</span>
+          </button>
+        </div>
+
+        <!-- Site Code Input Modal / Drawer -->
+        <dialog id="site-code-dialog" class="site-code-dialog">
+          <form id="site-code-form" method="dialog" class="dialog-content">
+            <h3 id="site-code-title" class="dialog-title" data-i18n="home.checkin_btn">Check In</h3>
+            <p id="site-code-prompt" class="dialog-desc" data-i18n="home.site_code_prompt">Enter the 6-digit code shown at your job site:</p>
+
+            <div class="code-input-wrapper">
+              <label for="input-site-code" class="sr-only" data-i18n="home.site_code_prompt">Site Code</label>
+              <input type="text" id="input-site-code" name="siteCode" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="123456" class="site-code-input" required>
+            </div>
+
+            <div id="site-code-error" class="error-msg" role="alert" hidden></div>
+
+            <div class="dialog-actions">
+              <button type="button" id="btn-cancel-code" class="btn-secondary" data-i18n="common.cancel">Cancel</button>
+              <button type="submit" id="btn-confirm-punch" class="btn-primary" data-i18n="home.checkin_btn">Confirm</button>
+            </div>
+          </form>
+        </dialog>
+
+        <!-- Digital Receipt Confirmation Card -->
+        <article id="receipt-card" class="card receipt-card" hidden>
+          <div class="receipt-header">
+            <span class="receipt-check" aria-hidden="true">✅</span>
+            <h3 data-i18n="home.punch_success">Shift punch recorded successfully!</h3>
+          </div>
+          <p id="receipt-hash" class="receipt-hash"></p>
+        </article>
+      </section>
+
+      <!-- 2. Payslip & Reconciliation View -->
+      <section id="tab-payslip" class="tab-pane" aria-labelledby="nav-tab-payslip" hidden>
+        <div class="view-header">
+          <h2 data-i18n="payslip.title">My Verified Payslip</h2>
+          <div class="period-control">
+            <label for="select-period" class="sr-only" data-i18n="payslip.period">Period</label>
+            <input type="month" id="select-period" class="period-picker">
+          </div>
+        </div>
+
+        <!-- Underpaid Alert Card (Displayed prominently when underpaid) -->
+        <article id="underpaid-alert-card" class="card underpaid-card" hidden>
+          <div class="underpaid-header">
+            <span class="underpaid-icon" aria-hidden="true">⚠️</span>
+            <h3 class="underpaid-title" data-i18n="advocate.headline.underpaid">Pay Advisory: Unpaid Hours Detected</h3>
+            <button type="button" id="btn-read-underpaid" class="btn-icon" aria-label="Read discrepancy aloud">
+              <span id="speaker-icon-underpaid" aria-hidden="true"></span>
+              <span class="sr-only" data-i18n="home.read_aloud">Read Aloud</span>
+            </button>
+          </div>
+          <p id="underpaid-text" class="underpaid-desc"></p>
+          <button type="button" id="btn-open-dispute" class="btn-danger" data-i18n="payslip.dispute_btn">Dispute This Discrepancy</button>
+        </article>
+
+        <!-- Dispute Modal -->
+        <dialog id="dispute-dialog" class="dispute-dialog">
+          <form id="dispute-form" method="dialog" class="dialog-content">
+            <h3 class="dialog-title" data-i18n="payslip.dispute_btn">Dispute Shift Day</h3>
+            <p data-i18n="payslip.dispute_prompt">Explain why you are disputing this shift day:</p>
+
+            <label for="dispute-date-select">Shift Date:</label>
+            <input type="date" id="dispute-date-select" required>
+
+            <label for="dispute-reason-text">Reason:</label>
+            <textarea id="dispute-reason-text" rows="3" required></textarea>
+
+            <div class="dialog-actions">
+              <button type="button" id="btn-cancel-dispute" class="btn-secondary" data-i18n="common.cancel">Cancel</button>
+              <button type="submit" id="btn-submit-dispute" class="btn-danger">Submit Dispute</button>
+            </div>
+          </form>
+        </dialog>
+
+        <!-- Total Earnings Card -->
+        <article class="card earnings-card">
+          <span class="earnings-label" data-i18n="payslip.title">Verified Earnings</span>
+          <h3 id="payslip-total-amount" class="earnings-amount">₹0.00</h3>
+          <p id="payslip-reconcile-note" class="earnings-note"></p>
+        </article>
+
+        <!-- Wage Line Items -->
+        <article class="card">
+          <h3>Line Items</h3>
+          <div id="payslip-lines-list" class="lines-list"></div>
+        </article>
+
+        <!-- Audit Amendments List -->
+        <article class="card">
+          <h3 data-i18n="payslip.audit_title">Payroll Amendments History</h3>
+          <div id="payslip-audit-list" class="audit-list"></div>
+        </article>
+      </section>
+
+      <!-- 3. Safety Hazard Reporting View -->
+      <section id="tab-report" class="tab-pane" aria-labelledby="nav-tab-report" hidden>
+        <div class="view-header">
+          <h2 data-i18n="report.title">Report a Workplace Hazard</h2>
+        </div>
+
+        <form id="hazard-form" class="card hazard-form" novalidate>
+          <div class="voice-row">
+            <button type="button" id="btn-mic-report" class="btn-mic">
+              <span id="mic-icon" aria-hidden="true"></span>
+              <span id="mic-btn-text" data-i18n="report.mic_btn">Speak Hazard (Voice)</span>
+            </button>
+            <span id="mic-status" class="mic-status" aria-live="polite"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="report-text">Hazard Details:</label>
+            <textarea id="report-text" data-i18n-placeholder="report.textarea_placeholder" placeholder="Describe what is broken, unsafe, or hazardous. Your name will NEVER be attached." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label data-i18n="report.category_title">Category (optional):</label>
+            <div id="category-chips" class="chips-container"></div>
+          </div>
+
+          <div id="report-form-error" class="error-msg" role="alert" hidden></div>
+
+          <button type="submit" id="btn-submit-report" class="btn-primary btn-block" data-i18n="report.submit_btn">Submit Safety Report</button>
+        </form>
+
+        <!-- Success Banner with Large Tracking Code -->
+        <article id="report-success-card" class="card report-success-card" hidden>
+          <h3 data-i18n="report.success_title">Report Submitted Anonymously</h3>
+          <p data-i18n="report.tracking_code_label">Your Private Tracking Code:</p>
+          <div class="tracking-code-display">
+            <span id="generated-tracking-code" class="tracking-code-number"></span>
+            <button type="button" id="btn-copy-code" class="btn-secondary" data-i18n="report.copy_btn">Copy Code</button>
+          </div>
+          <span id="copy-status" class="copy-status" aria-live="polite"></span>
+        </article>
+
+        <!-- Tracking Lookup Card -->
+        <article class="card track-lookup-card">
+          <h3 data-i18n="report.track_title">Track a Past Report</h3>
+          <form id="track-form" class="track-form">
+            <label for="input-track-code" class="sr-only">Tracking Code</label>
+            <input type="text" id="input-track-code" data-i18n-placeholder="report.track_input_placeholder" placeholder="Enter code (FS-XXXX-XXXX)" required>
+            <button type="submit" id="btn-track-submit" class="btn-secondary" data-i18n="report.track_btn">Check Status</button>
+          </form>
+
+          <div id="track-result-container" class="track-result" hidden>
+            <h4 id="track-result-status"></h4>
+            <p id="track-result-severity"></p>
+            <h5 data-i18n="report.history_label">Timeline</h5>
+            <ol id="track-result-history" class="timeline-list"></ol>
+          </div>
+        </article>
+      </section>
+
+      <!-- 4. Anonymous Voice / Feedback View -->
+      <section id="tab-feedback" class="tab-pane" aria-labelledby="nav-tab-feedback" hidden>
+        <div class="view-header">
+          <h2 data-i18n="feedback.title">Anonymous Worker Voice</h2>
+        </div>
+
+        <form id="feedback-form" class="card feedback-form" novalidate>
+          <fieldset class="form-group target-type-group">
+            <legend data-i18n="feedback.target_title">What would you like to review?</legend>
+            <div class="target-options">
+              <label class="clickable target-card">
+                <input type="radio" name="targetType" value="conditions" checked>
+                <span data-i18n="feedback.target_conditions">Site & Rest Conditions</span>
+              </label>
+              <label class="clickable target-card">
+                <input type="radio" name="targetType" value="manager">
+                <span data-i18n="feedback.target_manager">Supervisor / Management</span>
+              </label>
+              <label class="clickable target-card">
+                <input type="radio" name="targetType" value="policy">
+                <span data-i18n="feedback.target_policy">Shift Rules & Policies</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="form-group rating-group">
+            <legend data-i18n="feedback.rating_title">Your Rating (1 to 5 Stars):</legend>
+            <div class="star-rating">
+              <label for="star-1" class="clickable star-label"><input type="radio" id="star-1" name="rating" value="1"> 1★</label>
+              <label for="star-2" class="clickable star-label"><input type="radio" id="star-2" name="rating" value="2"> 2★</label>
+              <label for="star-3" class="clickable star-label"><input type="radio" id="star-3" name="rating" value="3" checked> 3★</label>
+              <label for="star-4" class="clickable star-label"><input type="radio" id="star-4" name="rating" value="4"> 4★</label>
+              <label for="star-5" class="clickable star-label"><input type="radio" id="star-5" name="rating" value="5"> 5★</label>
+            </div>
+          </fieldset>
+
+          <div class="form-group">
+            <label data-i18n="feedback.tags_title">Helpful Tags:</label>
+            <div id="feedback-chips" class="chips-container"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="feedback-comment">Comments:</label>
+            <textarea id="feedback-comment" data-i18n-placeholder="feedback.comment_placeholder" placeholder="Optional comments. Be honest—no one will know who wrote this."></textarea>
+          </div>
+
+          <p class="privacy-note">
+            <span data-i18n="feedback.privacy_note">Your name and worker ID are never stored with feedback.</span>
+            <a href="/api/public/what-we-store" target="_blank" rel="noopener noreferrer" data-i18n="feedback.privacy_link">View Data Storage Guarantee</a>
+          </p>
+
+          <div id="feedback-form-error" class="error-msg" role="alert" hidden></div>
+
+          <button type="submit" id="btn-submit-feedback" class="btn-primary btn-block" data-i18n="feedback.submit_btn">Submit Safe Feedback</button>
+        </form>
+
+        <article id="feedback-success-card" class="card" hidden>
+          <h3 data-i18n="feedback.success">Thank you! Your feedback has been recorded safely.</h3>
+        </article>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ─── Bottom Navigation Bar (4 Large Icon Buttons) ──────────── -->
+  <nav id="bottom-nav" class="bottom-nav" aria-label="Bottom Navigation" hidden>
+    <button type="button" class="nav-item active" data-tab="tab-home" id="nav-tab-home">
+      <span id="nav-icon-home" aria-hidden="true"></span>
+      <span class="nav-label" data-i18n="nav.home">Home</span>
+    </button>
+    <button type="button" class="nav-item" data-tab="tab-payslip" id="nav-tab-payslip">
+      <span id="nav-icon-payslip" aria-hidden="true"></span>
+      <span class="nav-label" data-i18n="nav.payslip">Payslip</span>
+    </button>
+    <button type="button" class="nav-item" data-tab="tab-report" id="nav-tab-report">
+      <span id="nav-icon-report" aria-hidden="true"></span>
+      <span class="nav-label" data-i18n="nav.report">Safety</span>
+    </button>
+    <button type="button" class="nav-item" data-tab="tab-feedback" id="nav-tab-feedback">
+      <span id="nav-icon-feedback" aria-hidden="true"></span>
+      <span class="nav-label" data-i18n="nav.feedback">Voice</span>
+    </button>
+  </nav>
+
+  <!-- JavaScript Entry Point -->
+  <script type="module" src="./worker.js"></script>
+</body>
+</html>

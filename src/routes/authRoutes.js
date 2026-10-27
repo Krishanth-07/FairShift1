@@ -109,8 +109,25 @@ export function createAuthRoutes({ config, repo, clock }) {
     });
   });
 
-  // ─── POST /api/auth/demo-login (conditional on DEMO_MODE) ──
+  // ─── DEMO_MODE Protected Endpoints ─────────────────────────
   if (config.DEMO_MODE) {
+    // GET /api/auth/demo-users: Returns demo roster without sensitive hashes or rates
+    router.get('/api/auth/demo-users', (req, res) => {
+      const allUsers = repo.getAllUsers();
+      const demoUsers = allUsers.map((u) => {
+        const site = repo.getSite(u.siteId);
+        return {
+          id: u.id,
+          name: u.name,
+          role: u.role,
+          siteLabel: site ? site.name : u.siteId,
+          language: u.lang || 'en'
+        };
+      });
+      res.json(demoUsers);
+    });
+
+    // POST /api/auth/demo-login: Fast login for demo users
     router.post(
       '/api/auth/demo-login',
       validateBody({
