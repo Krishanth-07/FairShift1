@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FairShift - Employer & Site Admin Dashboard</title>
-  <link rel="stylesheet" href="../shared/base.css">
-  <link rel="stylesheet" href="./admin.css">
+  <link rel="stylesheet" href="../shared/base.css?v=20261027b">
+  <link rel="stylesheet" href="./admin.css?v=20261027b">
 </head>
 <body>
   <div class="admin-layout">
@@ -42,13 +42,22 @@
         </div>
 
         <!-- Demo Admin Cards (Available in DEMO_MODE) -->
-        <div id="demo-admins-container" class="demo-admins-section" hidden>
+        <div id="demo-admins-container" class="demo-admins-section">
           <h3 data-i18n="admin.demo_title">Quick Demo Admin Login</h3>
-          <div id="demo-admins-list" class="demo-cards-list"></div>
+          <div id="demo-admins-list" class="demo-cards-list">
+            <button type="button" class="demo-admin-card" data-admin-id="c_admin_1">
+              <span class="demo-admin-name">Priya Desai</span>
+              <span class="demo-admin-site">Greenfield Tower Construction • c_admin_1</span>
+            </button>
+            <button type="button" class="demo-admin-card" data-admin-id="h_admin_1">
+              <span class="demo-admin-name">Vikram Reddy</span>
+              <span class="demo-admin-site">City General Hospital • h_admin_1</span>
+            </button>
+          </div>
         </div>
 
         <!-- Standard PIN Login Form -->
-        <form id="admin-login-form" novalidate>
+        <form id="admin-login-form" method="post" action="#" novalidate>
           <div class="form-group">
             <label for="input-admin-id" data-i18n="login.userId">Admin User ID</label>
             <input type="text" id="input-admin-id" name="userId" autocomplete="username" required>
@@ -250,6 +259,6 @@
     </footer>
   </div>
 
-  <script type="module" src="./admin.js"></script>
+  <script type="module" src="./admin.js?v=20261027b"></script>
 </body>
 </html>

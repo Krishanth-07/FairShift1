@@ -414,7 +414,7 @@ function updatePunchButtonUI() {
 
     if (shiftBadge) {
       shiftBadge.className = 'badge badge-ok';
-      shiftBadge.textContent = 'ON SHIFT';
+      shiftBadge.textContent = t('home.on_shift');
     }
     if (shiftDesc) {
       const startTime = new Date(state.activeSession.inTs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -427,7 +427,7 @@ function updatePunchButtonUI() {
 
     if (shiftBadge) {
       shiftBadge.className = 'badge badge-info';
-      shiftBadge.textContent = 'OFF DUTY';
+      shiftBadge.textContent = t('home.off_duty');
     }
     if (shiftDesc) {
       shiftDesc.textContent = t('home.no_active_session');

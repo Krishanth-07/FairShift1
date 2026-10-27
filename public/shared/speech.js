@@ -21,11 +21,15 @@ let cachedVoices = [];
  */
 function initVoices() {
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-    cachedVoices = window.speechSynthesis.getVoices();
+    const update = () => {
+      cachedVoices = window.speechSynthesis.getVoices();
+    };
+    update();
+    if (window.speechSynthesis.addEventListener) {
+      window.speechSynthesis.addEventListener('voiceschanged', update);
+    }
     if (window.speechSynthesis.onvoiceschanged !== undefined) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        cachedVoices = window.speechSynthesis.getVoices();
-      };
+      window.speechSynthesis.onvoiceschanged = update;
     }
   }
 }
@@ -57,13 +61,13 @@ function findVoice(lang) {
   match = voices.find((v) => v.lang.toLowerCase().split(/[-_]/)[0] === primaryCode);
   if (match) return match;
 
-  // 4. Voice name heuristic (e.g. contains 'tamil' or 'hindi')
+  // 4. Voice name heuristic (e.g. contains 'tamil' or 'hindi' or native scripts)
   if (primaryCode === 'ta') {
-    match = voices.find((v) => v.name.toLowerCase().includes('tamil'));
+    match = voices.find((v) => v.name.toLowerCase().includes('tamil') || v.name.includes('தமிழ்'));
     if (match) return match;
   }
   if (primaryCode === 'hi') {
-    match = voices.find((v) => v.name.toLowerCase().includes('hindi'));
+    match = voices.find((v) => v.name.toLowerCase().includes('hindi') || v.name.includes('हिन्दी'));
     if (match) return match;
   }
 
@@ -113,6 +117,7 @@ export function speak(text, lang = 'en') {
       activeUtterance = null;
     };
 
+    window.speechSynthesis.resume();
     window.speechSynthesis.speak(utterance);
   } catch (err) {
     console.warn('[FairShift Speech] Speech synthesis suppressed:', err);

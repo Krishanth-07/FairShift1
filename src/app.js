@@ -50,10 +50,11 @@ export function createApp({ config, repo, clock }) {
   app.use(
     express.static(PUBLIC_DIR, {
       setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.html')) {
+        // Never cache aggressively in DEMO_MODE or development so updates reflect instantly
+        if (config.DEMO_MODE || config.NODE_ENV !== 'production' || filePath.endsWith('.html')) {
           res.setHeader('Cache-Control', 'no-cache, must-revalidate');
         } else {
-          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          res.setHeader('Cache-Control', 'public, max-age=86400');
         }
       }
     })

@@ -78,6 +78,29 @@ function setupEventListeners() {
 
   const disputeBtn = document.getElementById('btn-admin-dispute-day');
   disputeBtn.addEventListener('click', handleDisputeDay);
+
+  // Quick Demo admin cards click delegation
+  const demoList = document.getElementById('demo-admins-list');
+  if (demoList) {
+    demoList.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.demo-admin-card');
+      if (!btn) return;
+      const adminId = btn.dataset.adminId;
+      if (adminId) {
+        try {
+          const res = await apiRequest('/api/auth/demo-login', {
+            method: 'POST',
+            body: { userId: adminId }
+          });
+          currentUser = res.user;
+          showDashboardView();
+          await loadDashboardData();
+        } catch (err) {
+          showError('admin-login-error', err.message);
+        }
+      }
+    });
+  }
 }
 
 /**
@@ -103,6 +126,7 @@ async function showLoginView() {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'demo-admin-card';
+        btn.dataset.adminId = admin.id;
 
         const nameSpan = document.createElement('span');
         nameSpan.className = 'demo-admin-name';
