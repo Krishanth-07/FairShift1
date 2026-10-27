@@ -1,0 +1,23 @@
+{
+  "name": "fairshift",
+  "version": "0.1.0",
+  "description": "A worker-first workplace trust platform for UN SDG 8 (Decent Work and Economic Growth)",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "sdg8",
+    "decent-work",
+    "worker-first",
+    "trust-platform",
+    "workplace-safety"
+  ],
+  "author": "",
+  "license": "MIT"
+}
